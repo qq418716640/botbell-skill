@@ -48,7 +48,7 @@ Three scripts are in the `scripts/` subdirectory next to this file. Determine th
 
 ## Usage Scenarios
 
-In all examples below, `SCRIPTS` refers to the absolute path to the `scripts/` directory.
+In all examples below, `SCRIPTS` is a placeholder for the absolute path to the `scripts/` directory next to this file. Before calling any script, resolve the real path. For example, if this SKILL.md is at `/home/user/.claude/skills/botbell/SKILL.md`, then `SCRIPTS` is `/home/user/.claude/skills/botbell/scripts`.
 
 ### 1. Notify after a long task
 

@@ -4,6 +4,9 @@
 #   Options: --url <url> --image <url> --format markdown
 set -euo pipefail
 
+command -v jq >/dev/null 2>&1 || { echo "Error: jq is required but not installed. Install with: brew install jq"; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not installed."; exit 1; }
+
 TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
 API_BASE="${BOTBELL_API_BASE:-https://api.botbell.app/v1}"
 
@@ -39,7 +42,7 @@ BODY=$(jq -n \
 
 RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${API_BASE}/push/${TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "$BODY")
+  -d "$BODY") || { echo "Error: Failed to connect to ${API_BASE}"; exit 1; }
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
