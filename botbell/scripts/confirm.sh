@@ -15,26 +15,31 @@ command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not insta
 TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
 API_BASE="${BOTBELL_API_BASE:-https://api.botbell.app/v1}"
 
-MESSAGE="${1:?Error: message is required}"
-TITLE="${2:-}"
-
-# Defaults
+MESSAGE=""
+TITLE=""
 ACTIONS=""
 INPUT_PLACEHOLDER=""
 TIMEOUT=300
 INTERVAL=5
 
-# Parse optional flags
-shift 2 2>/dev/null || shift $# 2>/dev/null
+# Parse all arguments: first positional is message, second is title, rest are flags
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --actions) ACTIONS="$2"; shift 2 ;;
     --input) INPUT_PLACEHOLDER="$2"; shift 2 ;;
     --timeout) TIMEOUT="$2"; shift 2 ;;
     --interval) INTERVAL="$2"; shift 2 ;;
-    *) shift ;;
+    *)
+      if [[ -z "$MESSAGE" ]]; then
+        MESSAGE="$1"
+      elif [[ -z "$TITLE" ]]; then
+        TITLE="$1"
+      fi
+      shift ;;
   esac
 done
+
+[[ -n "$MESSAGE" ]] || { echo "Error: message is required"; exit 1; }
 
 # Build actions JSON array
 ACTIONS_JSON=""
@@ -72,7 +77,7 @@ if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
 fi
 
 MESSAGE_ID=$(echo "$RESPONSE_BODY" | jq -r '.data.message_id' 2>/dev/null)
-echo "Notification sent (ID: $MESSAGE_ID). Waiting for reply..."
+echo "Notification sent (ID: $MESSAGE_ID). Waiting for reply..." >&2
 
 # Poll for reply
 ELAPSED=0
@@ -83,8 +88,8 @@ while [[ $ELAPSED -lt $TIMEOUT ]]; do
   POLL_RESPONSE=$(curl -s "${API_BASE}/messages/poll?limit=1&reply_to=${MESSAGE_ID}" \
     -H "X-Bot-Token: ${TOKEN}") || continue
 
-  MESSAGES=$(echo "$POLL_RESPONSE" | jq -r '.data.messages // []')
-  COUNT=$(echo "$MESSAGES" | jq 'length')
+  MESSAGES=$(echo "$POLL_RESPONSE" | jq -r '.data.messages // []' 2>/dev/null) || continue
+  COUNT=$(echo "$MESSAGES" | jq 'length' 2>/dev/null) || continue
 
   if [[ "$COUNT" -gt 0 ]]; then
     REPLY=$(echo "$MESSAGES" | jq '.[0]')
@@ -102,5 +107,5 @@ while [[ $ELAPSED -lt $TIMEOUT ]]; do
   fi
 done
 
-echo "Timed out waiting for reply after ${TIMEOUT}s"
+echo "Timed out waiting for reply after ${TIMEOUT}s" >&2
 exit 2

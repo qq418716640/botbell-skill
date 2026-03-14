@@ -10,22 +10,29 @@ command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not insta
 TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
 API_BASE="${BOTBELL_API_BASE:-https://api.botbell.app/v1}"
 
-MESSAGE="${1:?Error: message is required}"
-TITLE="${2:-}"
-
-# Parse optional flags
+MESSAGE=""
+TITLE=""
 URL=""
 IMAGE_URL=""
 FORMAT=""
-shift 2 2>/dev/null || shift $# 2>/dev/null
+
+# Parse all arguments: first positional is message, rest are flags or title
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --url) URL="$2"; shift 2 ;;
     --image) IMAGE_URL="$2"; shift 2 ;;
     --format) FORMAT="$2"; shift 2 ;;
-    *) shift ;;
+    *)
+      if [[ -z "$MESSAGE" ]]; then
+        MESSAGE="$1"
+      elif [[ -z "$TITLE" ]]; then
+        TITLE="$1"
+      fi
+      shift ;;
   esac
 done
+
+[[ -n "$MESSAGE" ]] || { echo "Error: message is required"; exit 1; }
 
 # Build JSON body
 BODY=$(jq -n \
