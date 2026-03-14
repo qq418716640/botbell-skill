@@ -19,7 +19,7 @@ Send notifications to the user's iPhone/Mac and get their replies, all from with
 **Before doing anything else, verify the environment:**
 
 ```bash
-echo "${BOTBELL_TOKEN:?}"
+test -n "${BOTBELL_TOKEN:-}" && echo "BOTBELL_TOKEN is set" || echo "BOTBELL_TOKEN is NOT set"
 ```
 
 If `BOTBELL_TOKEN` is not set, stop and tell the user:

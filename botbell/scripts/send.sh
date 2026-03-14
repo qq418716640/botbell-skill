@@ -4,7 +4,7 @@
 #   Options: --url <url> --image <url> --format markdown
 set -euo pipefail
 
-command -v jq >/dev/null 2>&1 || { echo "Error: jq is required but not installed. Install with: brew install jq"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "Error: jq is required but not installed. See https://jqlang.github.io/jq/download/"; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not installed."; exit 1; }
 
 TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
@@ -19,9 +19,9 @@ FORMAT=""
 # Parse all arguments: first positional is message, rest are flags or title
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) URL="$2"; shift 2 ;;
-    --image) IMAGE_URL="$2"; shift 2 ;;
-    --format) FORMAT="$2"; shift 2 ;;
+    --url) URL="${2:-}"; shift 2 ;;
+    --image) IMAGE_URL="${2:-}"; shift 2 ;;
+    --format) FORMAT="${2:-}"; shift 2 ;;
     *)
       if [[ -z "$MESSAGE" ]]; then
         MESSAGE="$1"

@@ -3,7 +3,7 @@
 # Usage: poll.sh [limit]
 set -euo pipefail
 
-command -v jq >/dev/null 2>&1 || { echo "Error: jq is required but not installed. Install with: brew install jq"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "Error: jq is required but not installed. See https://jqlang.github.io/jq/download/"; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not installed."; exit 1; }
 
 TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
