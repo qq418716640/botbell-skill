@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# BotBell confirm — send a message and wait for user reply
+# Usage:
+#   confirm.sh <message> [title]                    → free text reply
+#   confirm.sh <message> [title] --actions "Yes,No"  → button reply
+#   confirm.sh <message> [title] --input "placeholder" → text input button
+# Options:
+#   --timeout <seconds>  Max wait time (default: 300 = 5 minutes)
+#   --interval <seconds> Poll interval (default: 5)
+set -euo pipefail
+
+TOKEN="${BOTBELL_TOKEN:?Error: BOTBELL_TOKEN environment variable is not set}"
+API_BASE="${BOTBELL_API_BASE:-https://api.botbell.app/v1}"
+
+MESSAGE="${1:?Error: message is required}"
+TITLE="${2:-}"
+
+# Defaults
+ACTIONS=""
+INPUT_PLACEHOLDER=""
+TIMEOUT=300
+INTERVAL=5
+
+# Parse optional flags
+shift 2 2>/dev/null || shift $# 2>/dev/null
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --actions) ACTIONS="$2"; shift 2 ;;
+    --input) INPUT_PLACEHOLDER="$2"; shift 2 ;;
+    --timeout) TIMEOUT="$2"; shift 2 ;;
+    --interval) INTERVAL="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+# Build actions JSON array
+ACTIONS_JSON=""
+if [[ -n "$ACTIONS" ]]; then
+  ACTIONS_JSON=$(echo "$ACTIONS" | tr ',' '\n' | jq -R '{key: (. | ascii_downcase | gsub(" "; "_")), label: .}' | jq -s '.')
+  # Add input option if specified
+  if [[ -n "$INPUT_PLACEHOLDER" ]]; then
+    ACTIONS_JSON=$(echo "$ACTIONS_JSON" | jq --arg ph "$INPUT_PLACEHOLDER" '. + [{key: "custom_input", label: "Other...", type: "input", placeholder: $ph}]')
+  fi
+elif [[ -n "$INPUT_PLACEHOLDER" ]]; then
+  ACTIONS_JSON=$(jq -n --arg ph "$INPUT_PLACEHOLDER" '[{key: "custom_input", label: "Reply...", type: "input", placeholder: $ph}]')
+fi
+
+# Build JSON body
+BODY=$(jq -n \
+  --arg message "$MESSAGE" \
+  --arg title "$TITLE" \
+  --argjson actions "${ACTIONS_JSON:-null}" \
+  '{message: $message}
+   + (if $title != "" then {title: $title} else {} end)
+   + (if $actions != null then {actions: $actions, reply_mode: "actions_only"} else {} end)')
+
+# Send the notification
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${API_BASE}/push/${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "$BODY")
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+
+if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+  echo "Failed to send notification (HTTP $HTTP_CODE)"
+  echo "$RESPONSE_BODY" | jq -r '.message // .error // .' 2>/dev/null || echo "$RESPONSE_BODY"
+  exit 1
+fi
+
+MESSAGE_ID=$(echo "$RESPONSE_BODY" | jq -r '.data.message_id' 2>/dev/null)
+echo "Notification sent (ID: $MESSAGE_ID). Waiting for reply..."
+
+# Poll for reply
+ELAPSED=0
+while [[ $ELAPSED -lt $TIMEOUT ]]; do
+  sleep "$INTERVAL"
+  ELAPSED=$((ELAPSED + INTERVAL))
+
+  POLL_RESPONSE=$(curl -s "${API_BASE}/messages/poll?limit=10" \
+    -H "X-Bot-Token: ${TOKEN}")
+
+  MESSAGES=$(echo "$POLL_RESPONSE" | jq -r '.data.messages // []')
+  COUNT=$(echo "$MESSAGES" | jq 'length')
+
+  if [[ "$COUNT" -gt 0 ]]; then
+    # Find reply matching our message
+    REPLY=$(echo "$MESSAGES" | jq --arg mid "$MESSAGE_ID" '[.[] | select(.reply_to == $mid)] | first // .[0]')
+    if [[ "$REPLY" != "null" ]]; then
+      CONTENT=$(echo "$REPLY" | jq -r '.content // ""')
+      ACTION=$(echo "$REPLY" | jq -r '.action // ""')
+      if [[ -n "$ACTION" && "$ACTION" != "null" ]]; then
+        echo "REPLY_ACTION=$ACTION"
+        echo "REPLY_CONTENT=$CONTENT"
+      else
+        echo "REPLY_CONTENT=$CONTENT"
+      fi
+      exit 0
+    fi
+  fi
+done
+
+echo "Timed out waiting for reply after ${TIMEOUT}s"
+exit 2

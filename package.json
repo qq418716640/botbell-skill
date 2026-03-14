@@ -1,0 +1,17 @@
+{
+  "name": "botbell",
+  "description": "BotBell skill — Send push notifications to your phone from AI coding agents",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qq418716640/botbell-skill.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "botbell",
+    "notifications",
+    "push",
+    "ai"
+  ]
+}
