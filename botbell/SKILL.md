@@ -84,7 +84,10 @@ When you're about to do something destructive or irreversible, ask for confirmat
 RESULT=$(bash SCRIPTS/confirm.sh \
   "Delete 12 merged branches? (main and develop are protected)" \
   "Branch Cleanup" \
-  --actions "Yes,No")
+  --actions "Yes,No") || {
+  echo "No response or error. Aborting."
+  exit 1
+}
 
 if echo "$RESULT" | grep -q "REPLY_ACTION=yes"; then
   # User approved, proceed with deletion
@@ -104,7 +107,10 @@ When you need the user's input to continue.
 RESULT=$(bash SCRIPTS/confirm.sh \
   "Found 3 matching configs. Which one should I use?" \
   "Config Selection" \
-  --actions "production,staging,development")
+  --actions "production,staging,development") || {
+  echo "No response. Ask the user directly."
+  exit 1
+}
 
 ACTION=$(echo "$RESULT" | grep "REPLY_ACTION=" | cut -d= -f2)
 echo "User selected: $ACTION"
@@ -116,7 +122,10 @@ echo "User selected: $ACTION"
 RESULT=$(bash SCRIPTS/confirm.sh \
   "What should the new API endpoint be named?" \
   "Naming" \
-  --input "e.g. /v1/users/export")
+  --input "e.g. /v1/users/export") || {
+  echo "No response. Ask the user directly."
+  exit 1
+}
 
 CONTENT=$(echo "$RESULT" | grep "REPLY_CONTENT=" | cut -d= -f2-)
 echo "User replied: $CONTENT"

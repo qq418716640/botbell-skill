@@ -71,8 +71,8 @@ HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
 
 if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
-  echo "Failed to send notification (HTTP $HTTP_CODE)"
-  echo "$RESPONSE_BODY" | jq -r '.message // .error // .' 2>/dev/null || echo "$RESPONSE_BODY"
+  echo "Failed to send notification (HTTP $HTTP_CODE)" >&2
+  echo "$RESPONSE_BODY" | jq -r '.message // .error // .' 2>/dev/null >&2 || echo "$RESPONSE_BODY" >&2
   exit 1
 fi
 
