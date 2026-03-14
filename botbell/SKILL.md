@@ -36,7 +36,7 @@ Do NOT proceed until the token is configured.
 
 ## Scripts
 
-Three scripts are available in `${CLAUDE_SKILL_DIR}/scripts/`:
+Three scripts are in the `scripts/` subdirectory next to this file. Determine the absolute path to the scripts directory from this SKILL.md file's location, then call them with `bash <path>/scripts/<script>`.
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
@@ -47,6 +47,8 @@ Three scripts are available in `${CLAUDE_SKILL_DIR}/scripts/`:
 **All scripts require `jq` and `curl` to be installed.**
 
 ## Usage Scenarios
+
+In all examples below, `SCRIPTS` refers to the absolute path to the `scripts/` directory.
 
 ### 1. Notify after a long task
 
@@ -59,7 +61,7 @@ When the user asks you to run tests, build, deploy, or any task that takes a whi
 npm test 2>&1 | tee /tmp/test-output.txt
 
 # Summarize and notify
-bash ${CLAUDE_SKILL_DIR}/scripts/send.sh "All 58 tests passed in 4.2s" "Test Results"
+bash SCRIPTS/send.sh "All 58 tests passed in 4.2s" "Test Results"
 ```
 
 **Example:** User says "deploy to staging and notify me"
@@ -69,7 +71,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/send.sh "All 58 tests passed in 4.2s" "Test Res
 fly deploy --app myapp-staging 2>&1 | tee /tmp/deploy.log
 
 # Notify with result
-bash ${CLAUDE_SKILL_DIR}/scripts/send.sh "Staging deploy complete. v2.3.1 is live." "Deploy"
+bash SCRIPTS/send.sh "Staging deploy complete. v2.3.1 is live." "Deploy"
 ```
 
 ### 2. Confirm before risky operations
@@ -79,7 +81,7 @@ When you're about to do something destructive or irreversible, ask for confirmat
 **Example:** User says "clean up the old branches" — before deleting, confirm:
 
 ```bash
-RESULT=$(bash ${CLAUDE_SKILL_DIR}/scripts/confirm.sh \
+RESULT=$(bash SCRIPTS/confirm.sh \
   "Delete 12 merged branches? (main and develop are protected)" \
   "Branch Cleanup" \
   --actions "Yes,No")
@@ -99,7 +101,7 @@ When you need the user's input to continue.
 **Example:** Multiple options to choose from:
 
 ```bash
-RESULT=$(bash ${CLAUDE_SKILL_DIR}/scripts/confirm.sh \
+RESULT=$(bash SCRIPTS/confirm.sh \
   "Found 3 matching configs. Which one should I use?" \
   "Config Selection" \
   --actions "production,staging,development")
@@ -111,7 +113,7 @@ echo "User selected: $ACTION"
 **Example:** Free text input needed:
 
 ```bash
-RESULT=$(bash ${CLAUDE_SKILL_DIR}/scripts/confirm.sh \
+RESULT=$(bash SCRIPTS/confirm.sh \
   "What should the new API endpoint be named?" \
   "Naming" \
   --input "e.g. /v1/users/export")
@@ -126,20 +128,29 @@ When the user asks for a code review, analysis, or summary to be sent to their p
 
 **Example:** User says "review this PR and send me the summary"
 
+First do the analysis, compose the summary as a variable, then send:
+
 ```bash
-# Do the analysis first, then send
-bash ${CLAUDE_SKILL_DIR}/scripts/send.sh \
-  "## PR #42 Review\n\n**3 issues found:**\n- SQL injection in UserController L45\n- Missing null check in OrderService L123\n- Unused import in Utils.java\n\nNo blocking issues." \
-  "Code Review" \
-  --format markdown
+SUMMARY="PR #42 Review
+
+3 issues found:
+- SQL injection in UserController L45
+- Missing null check in OrderService L123
+- Unused import in Utils.java
+
+No blocking issues."
+
+bash SCRIPTS/send.sh "$SUMMARY" "Code Review"
 ```
+
+For markdown formatting, add `--format markdown`.
 
 ### 5. Check for replies
 
 When the user asks if there are any new messages.
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/poll.sh
+bash SCRIPTS/poll.sh
 ```
 
 ## Behavior Guidelines

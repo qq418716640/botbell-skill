@@ -77,15 +77,14 @@ while [[ $ELAPSED -lt $TIMEOUT ]]; do
   sleep "$INTERVAL"
   ELAPSED=$((ELAPSED + INTERVAL))
 
-  POLL_RESPONSE=$(curl -s "${API_BASE}/messages/poll?limit=10" \
+  POLL_RESPONSE=$(curl -s "${API_BASE}/messages/poll?limit=1&reply_to=${MESSAGE_ID}" \
     -H "X-Bot-Token: ${TOKEN}")
 
   MESSAGES=$(echo "$POLL_RESPONSE" | jq -r '.data.messages // []')
   COUNT=$(echo "$MESSAGES" | jq 'length')
 
   if [[ "$COUNT" -gt 0 ]]; then
-    # Find reply matching our message
-    REPLY=$(echo "$MESSAGES" | jq --arg mid "$MESSAGE_ID" '[.[] | select(.reply_to == $mid)] | first // .[0]')
+    REPLY=$(echo "$MESSAGES" | jq '.[0]')
     if [[ "$REPLY" != "null" ]]; then
       CONTENT=$(echo "$REPLY" | jq -r '.content // ""')
       ACTION=$(echo "$REPLY" | jq -r '.action // ""')
