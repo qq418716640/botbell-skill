@@ -19,6 +19,10 @@ Once installed, your AI assistant can:
 npx skills add qq418716640/botbell-skill
 ```
 
+## Prerequisites
+
+- `curl` and `jq` must be installed on your machine
+
 ## Setup
 
 1. Download [BotBell](https://botbell.app) from the App Store
