@@ -25,10 +25,10 @@ INTERVAL=5
 # Parse all arguments: first positional is message, second is title, rest are flags
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --actions) ACTIONS="${2:-}"; shift 2 ;;
-    --input) INPUT_PLACEHOLDER="${2:-}"; shift 2 ;;
-    --timeout) TIMEOUT="${2:-300}"; shift 2 ;;
-    --interval) INTERVAL="${2:-5}"; shift 2 ;;
+    --actions) [[ $# -ge 2 ]] && { ACTIONS="$2"; shift 2; } || shift ;;
+    --input) [[ $# -ge 2 ]] && { INPUT_PLACEHOLDER="$2"; shift 2; } || shift ;;
+    --timeout) [[ $# -ge 2 ]] && { TIMEOUT="$2"; shift 2; } || shift ;;
+    --interval) [[ $# -ge 2 ]] && { INTERVAL="$2"; shift 2; } || shift ;;
     *)
       if [[ -z "$MESSAGE" ]]; then
         MESSAGE="$1"

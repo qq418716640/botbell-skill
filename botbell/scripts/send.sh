@@ -19,9 +19,9 @@ FORMAT=""
 # Parse all arguments: first positional is message, rest are flags or title
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) URL="${2:-}"; shift 2 ;;
-    --image) IMAGE_URL="${2:-}"; shift 2 ;;
-    --format) FORMAT="${2:-}"; shift 2 ;;
+    --url) [[ $# -ge 2 ]] && { URL="$2"; shift 2; } || shift ;;
+    --image) [[ $# -ge 2 ]] && { IMAGE_URL="$2"; shift 2; } || shift ;;
+    --format) [[ $# -ge 2 ]] && { FORMAT="$2"; shift 2; } || shift ;;
     *)
       if [[ -z "$MESSAGE" ]]; then
         MESSAGE="$1"
