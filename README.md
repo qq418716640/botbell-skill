@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README.zh-CN.md)
+
 # BotBell Skill
 
 Send push notifications to your iPhone/Mac from AI coding agents — and get replies.
